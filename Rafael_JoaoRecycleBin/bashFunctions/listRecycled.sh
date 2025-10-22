@@ -64,7 +64,6 @@ list_recycled(){
 
 
 		if [[ "$detailedOption" == true ]]; then
-
 			echo "🆔 ID:           $id"
            		echo "📄 Name:         $original_name"
           		echo "📂 Original Path:$original_path"
