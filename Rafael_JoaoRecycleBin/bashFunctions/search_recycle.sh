@@ -15,14 +15,14 @@
 # Returns: 0 on success, 1 on failure (in case the file config doesn't exists or the paramters doesn't mach with any of files)
 #################################################
 
-CONFIG_FILE="$HOME/.recycle_bin/config"
+CONFIG_FILE_DIR="../ConfigRecycle.txt"
 search_recycle() {
 	
 	#import global variable from config
-	if [[ -f "$CONFIG_FILE" ]]; then
-    		source "$CONFIG_FILE"
+	if [[ -f "$CONFIG_FILE_DIR" ]]; then
+    		source "$CONFIG_FILE_DIR"
 	else
-    		echo "[ERROR] Config file not found: $CONFIG_FILE" >&2
+    		echo "[ERROR] Config file not found: $CONFIG_FILE_DIR" >&2
     		return 1
 	fi
 	
