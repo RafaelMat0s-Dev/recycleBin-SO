@@ -19,9 +19,6 @@ METADATA_FILE="$RECYCLE_DIR/metadata.csv"
 CONFIG_FILE="$RECYCLE_DIR/config"
 LOG_FILE="$RECYCLE_DIR/recyclebin.log"
 
-# ============================================
-# LOG FUNCTION
-# ============================================
 
 log() {
     local level="$1"
@@ -29,9 +26,6 @@ log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') [$level] $message" >> "$LOG_FILE"
 }
 
-# ============================================
-# DELETE FUNCTION
-# ============================================
 delete_file() {
 
     if [[ $# -eq 0 ]]; then

@@ -11,6 +11,10 @@
 #   0 on success, 1 on error
 #################################################
 
+# ============================================
+# GLOBAL VARIABLES
+# ============================================
+
 
 RECYCLE_DIR="$HOME/.recycle_bin"
 FILES_DIR="$RECYCLE_DIR/files"

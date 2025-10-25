@@ -19,9 +19,6 @@ METADATA_FILE="$RECYCLE_DIR/metadata.csv"
 CONFIG_FILE="$RECYCLE_DIR/config"
 LOG_FILE="$RECYCLE_DIR/recyclebin.log"
 
-# ============================================
-# LOG FUNCTION
-# ============================================
 
 log() {
     local level="$1"

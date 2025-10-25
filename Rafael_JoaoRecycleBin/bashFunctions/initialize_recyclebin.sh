@@ -8,12 +8,6 @@
 # Version: 1.1
 #################################################
 
-#################################################
-# Function: initialize_recyclebin()
-# Description: Creates, if it doesn't exist, the recycle bin folder in the user's home directory (~)
-# Parameters: None
-# Returns: 0 on success, 1 on failure
-#################################################
 
 initialize_recyclebin() {
     local RECYCLE_DIR="$HOME/.recycle_bin"
