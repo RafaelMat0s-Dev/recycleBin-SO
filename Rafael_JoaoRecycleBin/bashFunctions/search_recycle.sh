@@ -4,51 +4,90 @@
 # Script Query Comment
 # Author: Joao Miguel Padrao
 # Date: 2025-10-18
-# Description: Creating the function that search a delete file 
-# Version: 1.0
+# Description: Function that searches deleted files in recycle bin
+# Version: 1.1 (corrected)
 #################################################
 
 #################################################
 # Function: search_recycle()
-# Description: Search in the file's folder from a file or a pattern and for each file extracts the file code saved in metadata.bd,the type, the basename, the size and the owner~/
-# Parameters: This function has as paramter a name of a file or a pattern, it run like ./recycle_bin.sh "*.txt* (for instance)
-# Returns: 0 on success, 1 on failure (in case the file config doesn't exists or the paramters doesn't mach with any of files)
+# Description:
+#   Search for a file or pattern in the recycle bin and display:
+#   ID, name, type, size, and owner (from metadata.db)
+# Parameters:
+#   A filename or pattern (e.g. "*.txt")
+# Returns:
+#   0 on success, 1 on failure
 #################################################
 
 CONFIG_FILE_DIR="../ConfigRecycle.txt"
+
 search_recycle() {
 	
-	#import global variable from config
+	# Import global variables from config
 	if [[ -f "$CONFIG_FILE_DIR" ]]; then
-    		source "$CONFIG_FILE_DIR"
+    	source "$CONFIG_FILE_DIR"
 	else
-    		echo "[ERROR] Config file not found: $CONFIG_FILE_DIR" >&2
-    		return 1
+    	echo "[ERROR] Config file not found: $CONFIG_FILE_DIR" >&2
+    	return 1
 	fi
 	
-	cd $FILE_DIR
-	fileSearch=( $( find . -iname $1 ) )
-	#Save the files in a array(-iname means Case-Insensitive)
-	
-	if [[ ${#fileSearch[@]} = 0 ]]; 
-	do
-		echo "[ERROR] File do not exist ou do not exist file with such paramters"
+	# Ensure required variables are set
+	if [[ -z "$FILES_DIR" || -z "$METADATA_FILE" ]]; then
+		echo "[ERROR] FILES_DIR or METADATA_FILE not defined in config" >&2
 		return 1
-	done
-	
-	#fazer tabela
-	printf "%-10s %-40s %-20s %-10s %-40s\n" "Codigo" "Ficheiro" "Tipo de Ficheiro" "Tamanho" "Owner"
+	fi
+
+	if [[ -z "$1" ]]; then
+		echo "[ERROR] Missing search pattern. Usage: ./recycle_bin.sh search <pattern>" >&2
+		return 1
+	fi
+
+	local pattern="$1"
+
+	cd "$FILES_DIR" || {
+		echo "[ERROR] Cannot access recycle bin files directory: $FILES_DIR" >&2
+		return 1
+	}
+
+	# Find matching files (case insensitive)
+	mapfile -t fileSearch < <(find . -iname "$pattern")
+
+	# If no matches found
+	if [[ ${#fileSearch[@]} -eq 0 ]]; then
+		echo "[ERROR] No files found matching pattern '$pattern'"
+		return 1
+	fi
+
+	# Print table header
+	printf "%-36s %-30s %-10s %-10s %-20s\n" "UNIQUE_ID" "FILENAME" "TYPE" "SIZE" "OWNER"
+	echo "------------------------------------------------------------------------------------------"
+
 	for f in "${fileSearch[@]}"; do
-		fileCode=( $( grep f $METADATA_FILE | awk '{print $1}'))
-		fileSpace=( $( ls -ldh f | awk '{print $5}' ))
-		fileType=( $( ls -ldh f | awk '{print $1}' | cut -c1 ))
-		fileOwner=( $( ls -ldh f  | awk '{print $3}' ))
-		if [[ $fileType = '-' ]];
-		then
-			fileType='f'
+		local file_id
+		file_id=$(basename "$f")
+
+		# Find the line in metadata
+		local metadata_line
+		metadata_line=$(grep -m 1 "$file_id" "$METADATA_FILE")
+
+		if [[ -z "$metadata_line" ]]; then
+			continue
 		fi
-		printf "%-10s %-40s %-20s %-20s %-20s\n" "$fileCode" "$f" "$fileSpace" "$fileType" "$fileOwner"
+
+		IFS=',' read -r id original_name original_path deletion_date file_size file_type permissions owner <<< "$metadata_line"
+
+		local hr_size
+		if command -v numfmt &>/dev/null; then
+			hr_size=$(numfmt --to=iec --suffix=B "$file_size")
+		else
+			hr_size="${file_size}B"
+		fi
+
+		printf "%-36s %-30s %-10s %-10s %-20s\n" "$id" "$original_name" "$file_type" "$hr_size" "$owner"
 	done
-	#registar do log
-	echo "$(date '+%Y-%m-%d %H:%M:%S') [SEARCH] Search done by $1" >> "$LOG_FILE"
+
+	# Log search operation
+	echo "$(date '+%Y-%m-%d %H:%M:%S') [SEARCH] Search executed for pattern '$pattern'" >> "$LOG_FILE"
+
+	return 0
 }

@@ -25,7 +25,7 @@ initialize_recyclebin() {
     # Evita sobreescrever se o recycle bin já existe
     if [[ -d "$RECYCLE_DIR" ]]; then
         echo "[WARNING] Recycle bin already exists at $RECYCLE_DIR"
-        echo "          Skipping re-initialization to avoid overwriting data"
+        echo "          Skipping re-initialization to avoid overwriting dataaaaa"
         return 0
     fi
 
@@ -102,8 +102,3 @@ EOF
     echo "[SUCCESS] Recycle Bin initialized successfully at $RECYCLE_DIR"
     return 0
 }
-
-# Para executar a função quando o script é chamado diretamente
-if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
-    initialize_recyclebin
-fi
