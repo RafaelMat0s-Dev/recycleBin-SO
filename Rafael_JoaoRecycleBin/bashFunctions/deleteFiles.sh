@@ -9,17 +9,6 @@
 #    Script Created to Fulfill the restore_file() directory of the project.
 #################################################
 
-# ============================================
-# GLOBAL VARIABLES
-# ============================================
-
-RECYCLE_DIR="$HOME/.recycle_bin"
-FILES_DIR="$RECYCLE_DIR/files"
-METADATA_FILE="$RECYCLE_DIR/metadata.csv"
-CONFIG_FILE="$RECYCLE_DIR/config"
-LOG_FILE="$RECYCLE_DIR/recyclebin.log"
-
-
 log() {
     local level="$1"
     local message="$2"
@@ -27,6 +16,12 @@ log() {
 }
 
 delete_file() {
+
+    local RECYCLE_DIR="$HOME/.recycle_bin"
+    local FILES_DIR="$RECYCLE_DIR/files"
+    local METADATA_FILE="$RECYCLE_DIR/metadata.csv"
+    local CONFIG_FILE="$RECYCLE_DIR/config"
+    local LOG_FILE="$RECYCLE_DIR/recyclebin.log"
 
     if [[ $# -eq 0 ]]; then
         echo "[ERROR] No files or directories specified for deletion." >&2

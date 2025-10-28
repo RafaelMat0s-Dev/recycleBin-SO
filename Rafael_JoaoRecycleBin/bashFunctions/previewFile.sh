@@ -14,10 +14,6 @@
 # GLOBAL VARIABLES
 # ============================================
 
-RECYCLE_DIR="$HOME/.recycle_bin"
-FILES_DIR="$RECYCLE_DIR/files"
-METADATA_FILE="$RECYCLE_DIR/metadata.csv"
-LOG_FILE="$RECYCLE_DIR/recyclebin.log"
 
 
 log(){
@@ -28,6 +24,11 @@ log(){
 
 
 preview_file(){
+
+    local RECYCLE_DIR="$HOME/.recycle_bin"
+    local FILES_DIR="$RECYCLE_DIR/files"
+    local METADATA_FILE="$RECYCLE_DIR/metadata.csv"
+    local LOG_FILE="$RECYCLE_DIR/recyclebin.log"
 
     local id="$1"
 

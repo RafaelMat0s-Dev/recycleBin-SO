@@ -13,12 +13,6 @@
 # GLOBAL VARIABLES
 # ============================================
 
-RECYCLE_DIR="$HOME/.recycle_bin"
-FILES_DIR="$RECYCLE_DIR/files"
-METADATA_FILE="$RECYCLE_DIR/metadata.csv"
-CONFIG_FILE="$RECYCLE_DIR/config"
-LOG_FILE="$RECYCLE_DIR/recyclebin.log"
-
 
 log() {
     local level="$1"
@@ -27,6 +21,12 @@ log() {
 }
 
 restore_file(){
+
+    local RECYCLE_DIR="$HOME/.recycle_bin"
+    local FILES_DIR="$RECYCLE_DIR/files"
+    local METADATA_FILE="$RECYCLE_DIR/metadata.csv"
+    local CONFIG_FILE="$RECYCLE_DIR/config"
+    local LOG_FILE="$RECYCLE_DIR/recyclebin.log"
 
     # Primeiro preciso de diferenciar o script  para ver se é ID de ficheiro ou nome de ficheiro
 

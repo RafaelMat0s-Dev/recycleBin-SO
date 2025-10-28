@@ -12,23 +12,36 @@
 #################################################
 
 # ============================================
-# GLOBAL VARIABLES
+# GLOBAL VARIABLES (expected to be initialized elsewhere)
 # ============================================
 
-RECYCLE_DIR="$HOME/.recycle_bin"
-FILES_DIR="$RECYCLE_DIR/files"
-METADATA_FILE="$RECYCLE_DIR/metadata.db"
-LOG_FILE="$RECYCLE_DIR/recyclebin.log"
+# These should be defined by the main script or initializer:
+# RECYCLE_DIR
+# FILES_DIR
+# METADATA_FILE
+# LOG_FILE
 
-mkdir -p "$FILES_DIR"
-touch "$METADATA_FILE" "$LOG_FILE"
+# Defensive fallback (only if not set)
+: "${RECYCLE_DIR:="$HOME/.recycle_bin"}"
+: "${FILES_DIR:="$RECYCLE_DIR/files"}"
+: "${METADATA_FILE:="$RECYCLE_DIR/metadata.csv"}"
+: "${LOG_FILE:="$RECYCLE_DIR/recyclebin.log"}"
 
+# NOTE:
+# No directory or file creation here — this file should ONLY define functions!
+
+# ============================================
+# Logging helper
+# ============================================
 log() {
 	local level="$1"
 	local message="$2"
 	echo "$(date '+%Y-%m-%d %H:%M:%S') [$level] $message" >> "$LOG_FILE"
 }
 
+# ============================================
+# list_recycled function
+# ============================================
 list_recycled() {
 
 	local detailedOption=false
