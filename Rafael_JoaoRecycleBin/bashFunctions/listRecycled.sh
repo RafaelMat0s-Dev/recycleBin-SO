@@ -22,10 +22,7 @@
 # LOG_FILE
 
 # Defensive fallback (only if not set)
-: "${RECYCLE_DIR:="$HOME/.recycle_bin"}"
-: "${FILES_DIR:="$RECYCLE_DIR/files"}"
-: "${METADATA_FILE:="$RECYCLE_DIR/metadata.csv"}"
-: "${LOG_FILE:="$RECYCLE_DIR/recyclebin.log"}"
+
 
 # NOTE:
 # No directory or file creation here — this file should ONLY define functions!
@@ -43,6 +40,10 @@ log() {
 # list_recycled function
 # ============================================
 list_recycled() {
+	: "${RECYCLE_DIR:="$HOME/.recycle_bin"}"
+	: "${FILES_DIR:="$RECYCLE_DIR/files"}"
+	: "${METADATA_FILE:="$RECYCLE_DIR/metadata.csv"}"
+	: "${LOG_FILE:="$RECYCLE_DIR/recyclebin.log"}"
 
 	local detailedOption=false
 	[[ "$1" == "--detailed" ]] && detailedOption=true
