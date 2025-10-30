@@ -151,18 +151,37 @@ test_restore_nonexistent_path() {
 test_delete_nonexistent_file() {
     log_section "Test: Delete Non-existent File"
     setup
+
     $SCRIPT delete "$TEST_DIR/missing.txt" > /dev/null 2>&1
-    assert_fail "Delete non-existent file should fail"
+    local exit_code=$?
+
+    # Because this function was expected to fail then if it returns error code, it actually returns success
+    if [[ $exit_code -ne 0 ]]; then
+        assert_success "Delete non-existent file failed as expected"
+    else
+        assert_fail "Delete non-existent file unexpectedly succeeded"
+    fi
+
     teardown
 }
 
 test_restore_invalid_id() {
     log_section "Test: Restore Invalid ID"
     setup
+
     $SCRIPT restore "00000000-0000-0000-0000-000000000000" > /dev/null 2>&1
-    assert_fail "Restore with invalid ID should fail"
+    local exit_code=$?
+
+    # Because this function was expected to fail then if it returns error code, it actually returns success
+    if [[ $exit_code -ne 0 ]]; then
+        assert_success "Restore with invalid ID failed as expected"
+    else
+        assert_fail "Restore with invalid ID unexpectedly succeeded"
+    fi
+
     teardown
 }
+
 
 test_filename_with_spaces() {
     log_section "Test: Handle Filename with Spaces"

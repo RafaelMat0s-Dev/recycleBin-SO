@@ -6,18 +6,32 @@
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FUNCTIONS_DIR="$PROJECT_ROOT/bashFunctions"
 
-
-# source "$FUNCTIONS_DIR/deleteFiles.sh"
-# source "$FUNCTIONS_DIR/listRecycled.sh"
-# source "$FUNCTIONS_DIR/restoreFile.sh"
-# source "$FUNCTIONS_DIR/previewFile.sh"
-# source "$FUNCTIONS_DIR/search_recycle.sh"
+#################################################
+# Log Function - Helper Function to Log Messages to Avoid Repeating the Code
+# Author: Rafael da Costa Matos
+# Date: 2025-10-18
+# Version: 1
+# Parameters $1 level (Error, Success etc...) // $2 $message (Actual Message)
+# Returns: Doesn't Return any value, only echoes
+#################################################
 
 log() {
     local level="$1"
     local message="$2"
     echo "$(date '+%Y-%m-%d %H:%M:%S') [$level] $message" >> "$LOG_FILE"
 }
+
+# -------------------------------------------------------------------
+#################################################
+# Delete File
+# Author: Rafael da Costa Matos
+# Date: 2025-10-18
+# Last Version: 1.3
+# Parameters $1...$N -> (File/Directory names to Delete)
+# Returns: $0 on Sucess, $1 on Any Type of Error
+# Description:
+#       Function Created according to the rules in order to delete single/multiple_files
+#################################################
 
 delete_file() {
 
@@ -122,6 +136,18 @@ delete_file() {
 }
 
 
+# -------------------------------------------------------------------
+#################################################
+# Initialize Recycle Bin Folder / SubArchives and Folders
+# Author: Rafael da Costa Matos
+# Date: 2025-10-16
+# Last Version: 1.3
+# Parameters: Doesn't Receive Any parameters and the script is called from the Source ./recycle_bin.sh
+# Returns: $0 on Sucess, $1 on Any Type of Error + automatic Logs on the recyclelog file
+# Description:
+#       Function Created according to the rules in order as the base initialization of ~/.recycle_bin
+#################################################
+
 initialize_recyclebin() {
     local RECYCLE_DIR="$HOME/.recycle_bin"
     local FILES_DIR="$RECYCLE_DIR/files"
@@ -218,6 +244,19 @@ EOF
 
 
 
+# -------------------------------------------------------------------
+#################################################
+# List Recycled
+# Author: Rafael da Costa Matos
+# Date: 2025-10-19
+# Last Version: 1.2 
+# Parameters: Can Receive 1 or Zero Parameters dependant on the mode ($1 receives de --detailed flag)
+# Returns: $0 on Sucess, $1 on Any Type of Error + automatic Logs on the recyclelog file
+# Description:
+#################################################
+
+
+
 list_recycled() {
 	: "${RECYCLE_DIR:="$HOME/.recycle_bin"}"
 	: "${FILES_DIR:="$RECYCLE_DIR/files"}"
@@ -278,7 +317,6 @@ list_recycled() {
 		fi
 	done < "$METADATA_FILE"
 
-	# Summary
 	echo ""
 	echo "Total items: $total_count"
 	if command -v numfmt &>/dev/null; then
@@ -289,6 +327,18 @@ list_recycled() {
 
 	log "INFO" "Listed $total_count items (total size: ${total_size}B)"
 }
+
+
+# -------------------------------------------------------------------
+#################################################
+# Preview File
+# Author: Rafael da Costa Matos
+# Date: 2025-10-22
+# Last Version: 1.2 
+# Parameters: $1 Receives the File ID that wants to be previewed
+# Returns: $0 on Sucess, $1 on Any Type of Error + automatic Logs on the recyclelog file
+# Description:
+#################################################
 
 
 preview_file(){
@@ -352,6 +402,18 @@ preview_file(){
 
 }
 
+# -------------------------------------------------------------------
+#################################################
+# Restore File
+# Author: Rafael da Costa Matos
+# Date: 2025-10-19
+# Last Version: 1.2 
+# Parameters: $1 Receives either FileID or the FileName needed to restore file to current location
+# Returns: $0 on Sucess, $1 on Any Type of Error + automatic Logs on the recyclelog file
+# Description:
+#       Function Created according to the rules in order as the base initialization of ~/.recycle_bin
+#################################################
+
 
 restore_file(){
 
@@ -397,7 +459,7 @@ restore_file(){
     local dest_path="$original_path"
 
 
-    if [[! -e "$source_path" ]]; then
+    if [[ ! -e "$source_path" ]]; then
         echo "[ERROR] Recycled file not found in $FILES_DIR/$id"
         log "RESTORE_FAILED" "Missing recycled file for $id ($original_name)"
         return 1
@@ -468,7 +530,18 @@ restore_file(){
 
 
 
-
+# -------------------------------------------------------------------
+#################################################
+# Initialize Recycle Bin Updated
+# Author: Rafael da Costa Matos
+# Date: 2025-10-19
+# Last Version: 1.2 
+# Parameters: Doesn't Receive any Parameter
+# Returns: It's a void function so it doesn't return anything
+# Description:
+#       This was a function created because of a bug i was having because of files being created before the initialization of the recycle bin and so this function was created 
+#       for debugging
+#################################################
 
 initialize_recyclebinupdated() {
     # Clear any old function
