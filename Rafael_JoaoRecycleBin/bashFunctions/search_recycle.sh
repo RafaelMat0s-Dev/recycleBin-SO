@@ -19,23 +19,12 @@
 #   0 on success, 1 on failure
 #################################################
 
-CONFIG_FILE_DIR="../ConfigRecycle.txt"
-
 search_recycle() {
 	
-	# Import global variables from config
-	if [[ -f "$CONFIG_FILE_DIR" ]]; then
-    	source "$CONFIG_FILE_DIR"
-	else
-    	echo "[ERROR] Config file not found: $CONFIG_FILE_DIR" >&2
-    	return 1
-	fi
-	
-	# Ensure required variables are set
-	if [[ -z "$FILES_DIR" || -z "$METADATA_FILE" ]]; then
-		echo "[ERROR] FILES_DIR or METADATA_FILE not defined in config" >&2
-		return 1
-	fi
+	: "${RECYCLE_DIR:="$HOME/.recycle_bin"}"
+	: "${FILES_DIR:="$RECYCLE_DIR/files"}"
+	: "${METADATA_FILE:="$RECYCLE_DIR/metadata.csv"}"
+	: "${LOG_FILE:="$RECYCLE_DIR/recyclebin.log"}"
 
 	if [[ -z "$1" ]]; then
 		echo "[ERROR] Missing search pattern. Usage: ./recycle_bin.sh search <pattern>" >&2
