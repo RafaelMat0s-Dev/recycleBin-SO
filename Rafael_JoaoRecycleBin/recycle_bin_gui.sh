@@ -20,8 +20,10 @@ while true; do
         "🗑️ Delete File(s)" \
         "📂 List Files in Recycle Bin" \
         "👁️ Preview File" \
-        "♻️ Restore File" \
-        "🚪 Exit" 2>/dev/null)
+        "♻️ Restore File" \ "🔎 Search File" \
+        "💣 Empty File" \ "❓ Help" \
+        "📊 Satus" \ "🧹 Auto-Clean" \
+        "📏 Check quota" \ "🚪 Exit" 2>/dev/null)
 
     [[ $? -ne 0 ]] && break  # user pressed cancel
 
@@ -73,7 +75,51 @@ while true; do
             output=$("$SCRIPT" restore "$FILE_ID" 2>&1)
             [[ $? -eq 0 ]] && show_info "$output" || show_error "$output"
             ;;
+        "🔎 Search File")
+            PATTERN=$(zenity --entry --title="Search File" --text="Enter search file or pattern:" 2>/dev/null)
+            [[ -z "$PATTERN" ]] && continue
 
+            output=$("$SCRIPT" search "$PATTERN" 2>&1)
+            [[ $? -eq 0 ]] && show_output "Search Results" "$output" || show_info "$output"
+            ;;
+        "💣 Empty File")
+            FILE_ID=$(zenity --entry --title="Empty File" --text="Enter File ID(s) to permanently delete (comma-separated) or leave blank to empty all:" 2>/dev/null)
+
+            if [[ -z "$FILE_ID" ]]; then
+                confirm_action "Are you sure you want to empty the entire recycle bin?"
+                [[ $? -ne 0 ]] && continue
+                output=$("$SCRIPT" empty --force 2>&1)
+            else
+                IFS=',' read -r -a IDS <<< "$FILE_ID"
+                confirm_action "Are you sure you want to permanently delete the selected file(s)?"
+                [[ $? -ne 0 ]] && continue
+                output=$("$SCRIPT" empty --force "${IDS[@]}" 2>&1)
+            fi
+
+            [[ $? -eq 0 ]] && show_info "$output" || show_error "$output"
+            ;;
+        "❓ Help ")
+            output=$("$SCRIPT" help 2>&1)
+            [[ $? -eq 0 ]] && show_output "Recycle Bin Help" "$output" || show_error "$output"
+            ;;
+        "📊 Status")
+            output=$("$SCRIPT" status 2>&1)
+            [[ $? -eq 0 ]] && show_output "Recycle Bin Status" "$output" || show_error "$output"
+            ;;
+        "🧹 Auto-Clean")
+            confirm_action "Do you want to run auto-clean to remove old files?"
+            [[ $? -ne 0 ]] && continue
+
+            output=$("$SCRIPT" clean 2>&1)
+            [[ $? -eq 0 ]] && show_info "$output" || show_error "$output"
+            ;;
+        "📏 Check quota")
+            confirm_action "Do you want to check the recycle bin quota?"
+            [[ $? -ne 0 ]] && continue
+
+            output=$("$SCRIPT" check 2>&1)
+            [[ $? -eq 0 ]] && show_info "$output" || show_error "$output"
+            ;;
         "🚪 Exit")
             break
             ;;

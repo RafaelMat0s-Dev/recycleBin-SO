@@ -39,6 +39,7 @@ delete_file() {
     # Ensure recycle bin exists
     if [[ ! -d "$FILES_DIR" ]]; then
         echo "[ERROR] Recycle Bin not initialized. Run './recycle_bin.sh'" >&2
+        
         return 1
     fi
 

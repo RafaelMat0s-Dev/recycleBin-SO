@@ -47,4 +47,5 @@ display_help() {
     echo -e "       ->" 
     echo -e "       Examples:\n
                             ->./recycle_bin.sh status"    
+    return 0
 }
