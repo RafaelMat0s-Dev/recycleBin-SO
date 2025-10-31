@@ -3,6 +3,7 @@
 # GLOBAL VARIABLES
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FUNCTIONS_DIR="$PROJECT_ROOT/bashFunctions"
+CONFIG_FILE="./ConfigRecycle.txt"
 
 #################################################
 # Log Function - Helper Function to Log Messages to Avoid Repeating the Code
@@ -881,11 +882,6 @@ show_statistic() {
 #################################################
 
 auto_cleanup() {
-    : "${RECYCLE_DIR:="$HOME/.recycle_bin"}"
-    : "${FILES_DIR:="$RECYCLE_DIR/files"}"
-    : "${METADATA_FILE:="$RECYCLE_DIR/metadata.csv"}"
-    : "${CONFIG_FILE:="$RECYCLE_DIR/config"}"
-    : "${LOG_FILE:="$RECYCLE_DIR/recyclebin.log"}"
 
     [[ -f "$CONFIG_FILE" ]] && source "$CONFIG_FILE"
     [[ -f "$METADATA_FILE" ]] || { echo "[ERROR] metadata.csv not found"; return 1; }
@@ -894,6 +890,25 @@ auto_cleanup() {
         RETENTION_DAYS=1
         MAX_SIZE_MB=1
     fi
+
+    if [[ -z "$RETENTION_DAYS" ]]; then
+    RETENTION_DAYS=$(grep '^RETENTION_DAYS=' "$CONFIG_FILE" | cut -d'=' -f2 | tr -d '"[:space:]')
+    fi
+
+    if [[ -z "$MAX_SIZE_MB" ]]; then
+        MAX_SIZE_MB=$(grep '^MAX_SIZE_MB=' "$CONFIG_FILE" | cut -d'=' -f2 | tr -d '"[:space:]')
+    fi
+
+    # Validate both are loaded
+    if [[ -z "$RETENTION_DAYS" || -z "$MAX_SIZE_MB" ]]; then
+        echo "[ERROR] RETENTION_DAYS or MAX_SIZE_MB not found in $CONFIG_FILE" >&2
+        return 1
+    fi
+
+    echo "Current Max Size of Files - $MAX_SIZE_MB"
+    echo "Current Retention Days Period - $RETENTION_DAYS"
+
+
 
     local curdate=$(date +%s)
     local curdateDays=$(( curdate / 86400 ))
@@ -941,11 +956,6 @@ auto_cleanup() {
 #################################################
 
 check_quota() {
-    : "${RECYCLE_DIR:="$HOME/.recycle_bin"}"
-    : "${FILES_DIR:="$RECYCLE_DIR/files"}"
-    : "${METADATA_FILE:="$RECYCLE_DIR/metadata.csv"}"
-    : "${CONFIG_FILE:="$RECYCLE_DIR/config"}"
-    : "${LOG_FILE:="$RECYCLE_DIR/recyclebin.log"}"
 
     [[ -f "$CONFIG_FILE" ]] && source "$CONFIG_FILE"
     [[ -f "$METADATA_FILE" ]] || { 
@@ -960,6 +970,15 @@ check_quota() {
         MAX_SIZE_MB=1
     fi
 
+    if [[ -z "$MAX_SIZE_MB" ]]; then
+        if grep -q '^MAX_SIZE_MB=' "$CONFIG_FILE"; then
+            MAX_SIZE_MB=$(grep '^MAX_SIZE_MB=' "$CONFIG_FILE" | cut -d'=' -f2 | tr -d '"')
+        else
+            echo "[ERROR] MAX_SIZE_MB not found in $CONFIG_FILE" >&2
+            return 1
+        fi
+    fi
+    
     local fileDirSize
     fileDirSize=$(du -sm "$FILES_DIR" | cut -f1)
 
@@ -988,6 +1007,7 @@ check_quota() {
         fi
     fi
 
+    echo "[CHECK] Recycle bin usage within limit"
     log "CHECK" "Recycle bin usage within limit."
     return 0
 }

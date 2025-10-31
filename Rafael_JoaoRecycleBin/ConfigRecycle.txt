@@ -1,5 +1,5 @@
 RECYCLE_DIR="$HOME/.recycle_bin"
 FILES_DIR="$RECYCLE_DIR/files"
-METADATA_FILE="$RECYCLE_DIR/metadata.db"
+METADATA_FILE="$RECYCLE_DIR/metadata.csv"
 CONFIG_FILE="$RECYCLE_DIR/config"
 LOG_FILE="$RECYCLE_DIR/recyclebin.log"
