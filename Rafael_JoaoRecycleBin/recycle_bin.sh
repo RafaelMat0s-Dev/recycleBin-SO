@@ -87,9 +87,27 @@ delete_file() {
             continue
         fi
 
-        if [[ ! -r "$target" || ! -w "$(dirname "$target")" ]]; then
-            echo "[ERROR] No permission to delete: $target" >&2
-            log "ERROR" "Permission denied for $target"
+        local parent_dir
+        parent_dir=$(dirname "$target")
+
+        # Check if we have write & execute permissions in the parent directory
+        if [[ ! -w "$parent_dir" || ! -x "$parent_dir" ]]; then
+            echo "[ERROR] Cannot delete $target: no permission on parent directory" >&2
+            log "ERROR" "Permission denied for $target (parent directory)"
+            continue
+        fi
+
+        # Prevent the deletion of read-only files
+        if [[ -f "$target" && ! -w "$target" ]]; then
+            echo "[ERROR] Cannot delete $target: file is read-only" >&2
+            log "ERROR" "File is read-only: $target"
+            continue
+        fi
+
+        # For directories, ensure we can access for execution permission 
+        if [[ -d "$target" && ! -x "$target" ]]; then
+            echo "[ERROR] Cannot delete directory $target: no execute permission" >&2
+            log "ERROR" "Cannot access directory: $target"
             continue
         fi
 
@@ -175,29 +193,29 @@ initialize_recyclebin() {
     local CONFIG_FILE="$RECYCLE_DIR/config"
     local LOG_FILE="$RECYCLE_DIR/recyclebin.log"
 
-    # Verifica se $HOME está definido e é válido
+    # Verify the $HOME env variable to see if it's valid
     if [[ -z "$HOME" || ! -d "$HOME" ]]; then
         echo "[ERROR] Home environment variable is not set or invalid" >&2
         return 1
     fi
 
-    # Evita sobreescrever se o recycle bin já existe
+    # Avoids Overwriting if RecycleBin Already Exists
     if [[ -d "$RECYCLE_DIR" ]]; then
         echo "[WARNING] Recycle bin already exists at $RECYCLE_DIR"
-        echo "          Skipping re-initialization to avoid overwriting dataaaaa"
+        echo "          Skipping re-initialization to avoid overwriting data"
         return 0
     fi
 
     echo "[INFO] Initializing Recycle Bin at: $RECYCLE_DIR"
 
-    # Cria a estrutura de diretórios
+    # Creates the subdirectory structure
     mkdir -p "$FILES_DIR"
     if [[ $? -ne 0 || ! -d "$FILES_DIR" ]]; then
         echo "[ERROR] Failed to create directory structure at: $FILES_DIR" >&2
         return 1
     fi
 
-    # Cria o ficheiro metadata.csv com cabeçalho se não existir
+    # Creates the metadata.csv file if it doesn't exist (with header)
     if [[ ! -f "$METADATA_FILE" || ! -s "$METADATA_FILE" ]]; then
         echo "ID,ORIGINAL_NAME,ORIGINAL_PATH,DELETION_DATE,FILE_SIZE,FILE_TYPE,PERMISSIONS,OWNER" > "$METADATA_FILE"
         if [[ $? -ne 0 ]]; then
@@ -209,7 +227,7 @@ initialize_recyclebin() {
         echo "[INFO] metadata.csv already exists, skipping"
     fi
 
-    # Cria ficheiro de configuração se não existir
+    # Creates the Config File for MAX_SIZE_MB and RETENTION_DAYS (Amount of time file) used  in auto cleanup and check_quota
     if [[ ! -f "$CONFIG_FILE" ]]; then
         cat > "$CONFIG_FILE" << EOF
 MAX_SIZE_MB=1024
@@ -224,12 +242,12 @@ EOF
         echo "[INFO] Config file already exists, skipping"
     fi
 
-    # Lê configurações
+    # Reads the COnfigurations
     local MAX_SIZE RETENTION
     MAX_SIZE=$(grep -E '^MAX_SIZE_MB=' "$CONFIG_FILE" | cut -d'=' -f2)
     RETENTION=$(grep -E '^RETENTION_DAYS=' "$CONFIG_FILE" | cut -d'=' -f2)
 
-    # Valida configurações
+    # Makes sure the configuration are valid
     if [[ -z "$MAX_SIZE" || "$MAX_SIZE" =~ [^0-9] ]]; then
         echo "[ERROR] Invalid MAX_SIZE_MB value in config: '$MAX_SIZE'" >&2
         return 1
@@ -239,7 +257,7 @@ EOF
         return 1
     fi
 
-    # Cria ficheiro de log se não existir
+    # Creates the Log file if it doesn't exist
     if [[ ! -f "$LOG_FILE" ]]; then
         touch "$LOG_FILE"
         if [[ $? -ne 0 ]]; then
@@ -249,13 +267,13 @@ EOF
         echo "[INFO] Created recyclebin.log"
     fi
 
-    # Verifica permissões de escrita no log
+    # Verifies writing permissions on log file
     if [[ ! -w "$LOG_FILE" ]]; then
         echo "[ERROR] recyclebin.log is not writable at $LOG_FILE" >&2
         return 1
     fi
 
-    # Escreve no log
+    # Writes to Log File (Don't forget to change this after creation of Log function)
     echo "$(date '+%Y-%m-%d %H:%M:%S') [INIT] Recycle Bin initialized successfully" >> "$LOG_FILE"
 
     echo "[SUCCESS] Recycle Bin initialized successfully at $RECYCLE_DIR"
@@ -936,6 +954,8 @@ auto_cleanup() {
     else
         log "CLEANUP" "Recycle Bin optimized successfully ($deleted files removed)"
     fi
+
+    echo "[INFO] All files are within RETENTION DAYS Parameteres"
     return 0
 }
 

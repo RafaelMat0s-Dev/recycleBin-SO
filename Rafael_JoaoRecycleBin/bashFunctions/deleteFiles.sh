@@ -17,6 +17,9 @@ log() {
 
 delete_file() {
 
+
+    echo "entrei"
+
     local RECYCLE_DIR="$HOME/.recycle_bin"
     local FILES_DIR="$RECYCLE_DIR/files"
     local METADATA_FILE="$RECYCLE_DIR/metadata.csv"
@@ -51,9 +54,27 @@ delete_file() {
             continue
         fi
 
-        if [[ ! -r "$target" || ! -w "$(dirname "$target")" ]]; then
-            echo "[ERROR] No permission to delete: $target" >&2
-            log "ERROR" "Permission denied for $target"
+        local parent_dir
+        parent_dir=$(dirname "$target")
+
+        # Check if we have write & execute permissions in the parent directory
+        if [[ ! -w "$parent_dir" || ! -x "$parent_dir" ]]; then
+            echo "[ERROR] Cannot delete $target: no permission on parent directory" >&2
+            log "ERROR" "Permission denied for $target (parent directory)"
+            continue
+        fi
+
+        # Optional: prevent deleting read-only files
+        if [[ -f "$target" && ! -w "$target" ]]; then
+            echo "[ERROR] Cannot delete $target: file is read-only" >&2
+            log "ERROR" "File is read-only: $target"
+            continue
+        fi
+
+        # For directories, ensure we can access them
+        if [[ -d "$target" && ! -x "$target" ]]; then
+            echo "[ERROR] Cannot delete directory $target: no execute permission" >&2
+            log "ERROR" "Cannot access directory: $target"
             continue
         fi
 
