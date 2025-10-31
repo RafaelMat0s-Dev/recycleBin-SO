@@ -15,15 +15,20 @@ confirm_action() {
 # --- Main Menu Loop ---
 while true; do
     ACTION=$(zenity --list --title="🗑️ Recycle Bin Manager" \
-        --column="Select an Action" --width=420 --height=350 \
-        "🧰 Initialize Recycle Bin" \
-        "🗑️ Delete File(s)" \
-        "📂 List Files in Recycle Bin" \
-        "👁️ Preview File" \
-        "♻️ Restore File" \ "🔎 Search File" \
-        "💣 Empty File" \ "❓ Help" \
-        "📊 Satus" \ "🧹 Auto-Clean" \
-        "📏 Check quota" \ "🚪 Exit" 2>/dev/null)
+    --column="Select an Action" --width=420 --height=350 \
+    "🧰 Initialize Recycle Bin" \
+    "🗑️ Delete File(s)" \
+    "📂 List Files in Recycle Bin" \
+    "👁️ Preview File" \
+    "♻️ Restore File" \
+    "🔎 Search File" \
+    "💣 Empty File" \
+    "❓ Help" \
+    "📊 Status" \
+    "🧹 Auto-Clean" \
+    "📏 Check quota" \
+    "🚪 Exit" 2>/dev/null)
+
 
     [[ $? -ne 0 ]] && break  # user pressed cancel
 
@@ -75,6 +80,7 @@ while true; do
             output=$("$SCRIPT" restore "$FILE_ID" 2>&1)
             [[ $? -eq 0 ]] && show_info "$output" || show_error "$output"
             ;;
+
         "🔎 Search File")
             PATTERN=$(zenity --entry --title="Search File" --text="Enter search file or pattern:" 2>/dev/null)
             [[ -z "$PATTERN" ]] && continue
@@ -82,8 +88,9 @@ while true; do
             output=$("$SCRIPT" search "$PATTERN" 2>&1)
             [[ $? -eq 0 ]] && show_output "Search Results" "$output" || show_info "$output"
             ;;
+
         "💣 Empty File")
-            FILE_ID=$(zenity --entry --title="Empty File" --text="Enter File ID(s) to permanently delete (comma-separated) or leave blank to empty all:" 2>/dev/null)
+            FILE_ID=$(zenity --entry --title="Empty Recycle Bin" --text="Enter File ID(s) to permanently delete (comma-separated) or leave blank to empty all:" 2>/dev/null)
 
             if [[ -z "$FILE_ID" ]]; then
                 confirm_action "Are you sure you want to empty the entire recycle bin?"
@@ -98,14 +105,17 @@ while true; do
 
             [[ $? -eq 0 ]] && show_info "$output" || show_error "$output"
             ;;
-        "❓ Help ")
+
+        "❓ Help")
             output=$("$SCRIPT" help 2>&1)
             [[ $? -eq 0 ]] && show_output "Recycle Bin Help" "$output" || show_error "$output"
             ;;
+
         "📊 Status")
             output=$("$SCRIPT" status 2>&1)
             [[ $? -eq 0 ]] && show_output "Recycle Bin Status" "$output" || show_error "$output"
             ;;
+
         "🧹 Auto-Clean")
             confirm_action "Do you want to run auto-clean to remove old files?"
             [[ $? -ne 0 ]] && continue
@@ -113,6 +123,7 @@ while true; do
             output=$("$SCRIPT" clean 2>&1)
             [[ $? -eq 0 ]] && show_info "$output" || show_error "$output"
             ;;
+
         "📏 Check quota")
             confirm_action "Do you want to check the recycle bin quota?"
             [[ $? -ne 0 ]] && continue
@@ -120,8 +131,10 @@ while true; do
             output=$("$SCRIPT" check 2>&1)
             [[ $? -eq 0 ]] && show_info "$output" || show_error "$output"
             ;;
+
         "🚪 Exit")
             break
             ;;
     esac
+
 done

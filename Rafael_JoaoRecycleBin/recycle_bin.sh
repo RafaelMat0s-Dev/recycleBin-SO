@@ -122,7 +122,7 @@ delete_file() {
         base_name=$(basename "$target")
         local abs_path
         abs_path=$(realpath "$target")
-        local dest_path="$FILES_DIR/${id:0:10}"
+        local dest_path="$FILES_DIR/$id"
 
         # Determine size of the file and type of the file
         local file_size file_type perms owner
