@@ -79,11 +79,12 @@ delete_file() {
         initialize_recyclebinupdated
         return 1
     fi
-
+    error=0
     for target in "$@"; do
         if [[ ! -e "$target" ]]; then
             echo "[ERROR] FILE or DIRECTORY not found: $target" >&2
             log "ERROR" "File/Directory not found: $target"
+            ((error++))
             continue
         fi
 
@@ -94,6 +95,7 @@ delete_file() {
         if [[ ! -w "$parent_dir" || ! -x "$parent_dir" ]]; then
             echo "[ERROR] Cannot delete $target: no permission on parent directory" >&2
             log "ERROR" "Permission denied for $target (parent directory)"
+            ((error++))
             continue
         fi
 
@@ -101,6 +103,7 @@ delete_file() {
         if [[ -f "$target" && ! -w "$target" ]]; then
             echo "[ERROR] Cannot delete $target: file is read-only" >&2
             log "ERROR" "File is read-only: $target"
+            ((error++))
             continue
         fi
 
@@ -108,6 +111,7 @@ delete_file() {
         if [[ -d "$target" && ! -x "$target" ]]; then
             echo "[ERROR] Cannot delete directory $target: no execute permission" >&2
             log "ERROR" "Cannot access directory: $target"
+            ((error++))
             continue
         fi
 
@@ -118,7 +122,7 @@ delete_file() {
         base_name=$(basename "$target")
         local abs_path
         abs_path=$(realpath "$target")
-        local dest_path="$FILES_DIR/$id"
+        local dest_path="$FILES_DIR/${id:0:10}"
 
         # Determine size of the file and type of the file
         local file_size file_type perms owner
@@ -144,6 +148,7 @@ delete_file() {
         if (( avail_kb <= file_kb )); then
             echo "[ERROR] Insufficient disk space in recycle bin. Cannot delete: $target" >&2
             log "ERROR" "Insufficient disk space for $target (requires ${file_kb}KB)"
+            ((error++))
             continue
         fi
 
@@ -157,6 +162,7 @@ delete_file() {
         if [[ $? -ne 0 ]]; then
             echo "[ERROR] Failed to move $target to recycle bin." >&2
             log "ERROR" "Failed to move $target"
+            ((error++))
             continue
         fi
 
@@ -169,7 +175,9 @@ delete_file() {
         echo "[SUCCESS] Deleted: $base_name -> Recycle bin ($id)"
         log "DELETE" "Moved $target -> $dest_path"
     done
-
+    if [[ "$error" -ge "$#" ]]; then
+        return 1
+    fi
     return 0
 }
 
@@ -636,13 +644,13 @@ empty_recyclebin() {
 	error=0
 	deletedFiles=0
 	for fileID in "${argument[@]}"; do
-		file=$( grep "$fileID" "$METADATA_FILE" | awk -F',' '{print $2}')
-		if [[ -z "$file" ]]; then
+		#file=$(tail -n +2 "$METADATA_FILE" | grep "$fileID" | awk -F',' '{print $1}')
+		if [[ -z "$fileID" ]]; then
 			echo "[ERROR] File ID unknown: $fileID"
 			((error++))
     		continue
 		fi
-		filePath="$FILES_DIR/$file"
+		filePath="$FILES_DIR/$fileID"
 		if [[ ! -e "$filePath" ]]; then
     		echo "[ERROR] File not found: $file"
 			((error++))
@@ -691,22 +699,33 @@ search_recycle() {
 	: "${FILES_DIR:="$RECYCLE_DIR/files"}"
 	: "${METADATA_FILE:="$RECYCLE_DIR/metadata.csv"}"
 	: "${LOG_FILE:="$RECYCLE_DIR/recyclebin.log"}"
-
-	if [[ -z "$1" ]]; then
+    
+	
+    if [[ -z "$1" ]]; then
 		echo "[ERROR] Missing search pattern. Usage: ./recycle_bin.sh search <pattern>" >&2
 		return 1
 	fi
-
+    
 	local pattern="$1"
 
 	cd "$FILES_DIR" || {
 		echo "[ERROR] Cannot access recycle bin files directory: $FILES_DIR" >&2
 		return 1
 	}
-
+    #============================================
 	# Find matching files (case insensitive)
-	mapfile -t fileSearch < <(find . -iname "$pattern")
-
+    files=("$FILES_DIR"/*)
+    fileSearch=()
+    for file in "${files[@]}"; do
+        file_name=$(basename "$file")
+        fileOrigName=$(awk -F',' -v id="$file_name" '$1 ~ id {print $2}' "$METADATA_FILE")
+        fileOrigName_lower=$(echo "$fileOrigName" | tr '[:upper:]' '[:lower:]')
+        pattern_lower=$(echo "$pattern" | tr '[:upper:]' '[:lower:]')
+        if [[ "$fileOrigName_lower" =~ $pattern_lower ]]; then
+            fileSearch+=("$file_name")
+        fi
+    done
+    #============================================
 	# If no matches found
 	if [[ ${#fileSearch[@]} -eq 0 ]]; then
 		echo "[ERROR] No files found matching pattern '$pattern'"
@@ -764,6 +783,9 @@ display_help() {
     echo -e "Use: ./recycle_bin [option] [Flags] [File/id]\n"
     echo -e "Recycle Bin Commands:\n"
     echo -e "Options:\n"
+    echo -e "    nothing -> Creates the recycle bin's structure\n"
+    echo -e "       Examples:\n"
+    echo -e "           ->./recycle_bin.sh delete myfile.txt\n"
     echo -e "   'delete' -> Moves a file(s) to the recycle but do not delete it permanently. Acept as argument a file or a path\n"
     echo -e "       Examples:\n
                             ->./recycle_bin.sh delete myfile.txt\n
@@ -789,9 +811,19 @@ display_help() {
                             ->./recycle_bin.sh empty 1696234567_abc123\n
                             ->./recycle_bin.sh empty --force\n"
     echo -e "   'status' -> Shows information about the recycle bin:\n"
-    echo -e "       ->" 
     echo -e "       Examples:\n
-                            ->./recycle_bin.sh status"    
+                            ->./recycle_bin.sh status\n" 
+    echo -e "   'preview' -> Allows to see the first 10 line of a text document:\n"
+    echo -e "             ->If the file is a binary type, show some information\n" 
+    echo -e "       Examples:\n
+                            ->./recycle_bin.sh preview myfile.txt\n"
+    echo -e "               ->:/recycle_bin.sh preview program.exe\n"
+    echo -e "   'clean' -> Remove every file that is in the recycle more than 30 days:\n"
+    echo -e "       Examples:\n
+                            ->./recycle_bin.sh clean\n" 
+    echo -e "   'check' -> Checks if the recycle is bigger than 1024 MB\n"
+    echo -e "       Examples:\n
+                            ->./recycle_bin.sh check\n"
     return 0
 }
 
@@ -910,7 +942,7 @@ auto_cleanup() {
     fi
 
     if [[ -z "$RETENTION_DAYS" ]]; then
-    RETENTION_DAYS=$(grep '^RETENTION_DAYS=' "$CONFIG_FILE" | cut -d'=' -f2 | tr -d '"[:space:]')
+        RETENTION_DAYS=$(grep '^RETENTION_DAYS=' "$CONFIG_FILE" | cut -d'=' -f2 | tr -d '"[:space:]')
     fi
 
     if [[ -z "$MAX_SIZE_MB" ]]; then
@@ -942,6 +974,7 @@ auto_cleanup() {
         ts=$(date -d "$fileDate" +%s)
         fileDateDays=$(( ts / 86400 ))
         if (( curdateDays - fileDateDays >= RETENTION_DAYS )); then
+            
             rm -rf "$f"
             sed -i "/^$file_id,/d" "$METADATA_FILE"
             echo "[INFO] File $f auto-deleted successfully"

@@ -75,6 +75,7 @@ test_delete_single_file() {
     log_section "Test: Delete Single File"
     setup
     echo "test content" > "$TEST_DIR/test.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/test.txt" > /dev/null 2>&1
     assert_success "Delete existing file"
     [ ! -f "$TEST_DIR/test.txt" ] && echo "✓ File removed from original location"
@@ -93,32 +94,34 @@ test_restore_single_file() {
     log_section "Test: Restore Single File"
     setup
     echo "restore me" > "$TEST_DIR/restore_test.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/restore_test.txt" > /dev/null 2>&1
     local ID
     ID=$($SCRIPT list | grep "restore_test" | awk '{print $1}')
     $SCRIPT restore "$ID" > /dev/null 2>&1
     assert_success "Restore file from recycle bin"
     #this function works properly
-    #[ -f "$TEST_DIR/restore_test.txt" ] && echo "✓ File successfully restored"
+    [ -f "$TEST_DIR/restore_test.txt" ] && echo "✓ File successfully restored"
     teardown
 }
 
 test_empty_single_file() {
     log_section "Test: Empty single file"
     setup
-    echo "delete me" > "$TEST_DIR/emptySingleFile_test.txt"
-    $SCRIPT delete "$TEST_DIR/emptySingleFile_test.txt" > /dev/null 2>&1
+    echo "delete me" > "$TEST_DIR/emptySingleFile.txt" > /dev/null 2>&1
+    $SCRIPT > /dev/null 2>&1
+    $SCRIPT delete "$TEST_DIR/emptySingleFile.txt" > /dev/null 2>&1
     local ID
-    ID=$($SCRIPT list | grep "emptySingleFile_test" | awk '{print $1}')
-    $SCRIPT '--force' empty "$ID" > /dev/null 2>&1
+    ID=$($SCRIPT list | grep "emptySingleFile.txt" | awk '{print $1}')
+    $SCRIPT empty --force "$ID" > /dev/null 2>&1
     assert_success "File deleted permanently"
     # Checks if the function works as properly
     #this function works properly
-    #if [ ! -e "$FILES_DIR/emptySingleFile_test.txt" ]; then
-    #    echo "file deleted successfully"
-    #else
-    #    echo "file not deleted"
-    #fi
+    if [ ! -e "$FILES_DIR/emptySingleFile_test.txt" ]; then
+        echo "file deleted successfully"
+    else
+        echo "file not deleted"
+    fi
     teardown
 }
 
@@ -131,6 +134,7 @@ test_search_file() {
     echo "d" > "$TEST_DIR/d.txt"
     echo "e" > "$TEST_DIR/e.txt"
     echo "f" > "$TEST_DIR/f.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/a.txt" "$TEST_DIR/b.txt" "$TEST_DIR/c.txt" "$TEST_DIR/d.txt" "$TEST_DIR/e.txt" "$TEST_DIR/f.txt" > /dev/null 2>&1
     $SCRIPT search "d" > /dev/null 2>&1
     assert_success "Search for a file"
@@ -154,6 +158,7 @@ test_delete_multiple_files() {
     setup
     echo "a" > "$TEST_DIR/a.txt"
     echo "b" > "$TEST_DIR/b.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/a.txt" "$TEST_DIR/b.txt" > /dev/null 2>&1
     assert_success "Delete multiple files"
     teardown
@@ -163,6 +168,7 @@ test_delete_empty_directory() {
     log_section "Test: Delete Empty Directory"
     setup
     mkdir "$TEST_DIR/empty_dir"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/empty_dir" > /dev/null 2>&1
     assert_success "Delete empty directory"
     teardown
@@ -173,6 +179,7 @@ test_delete_directory_with_contents() {
     setup
     mkdir -p "$TEST_DIR/nested/dir"
     echo "inside" > "$TEST_DIR/nested/dir/file.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/nested" > /dev/null 2>&1
     assert_success "Delete directory recursively"
     teardown
@@ -183,6 +190,7 @@ test_restore_nonexistent_path() {
     setup
     mkdir -p "$TEST_DIR"
     echo "test" > "$TEST_DIR/file.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/file.txt" > /dev/null 2>&1
     local ID
     ID=$($SCRIPT list | grep "file.txt" | awk '{print $1}')
@@ -195,10 +203,9 @@ test_restore_nonexistent_path() {
 test_delete_nonexistent_file() {
     log_section "Test: Delete Non-existent File"
     setup
-
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/missing.txt" > /dev/null 2>&1
     local exit_code=$?
-
     # Because this function was expected to fail then if it returns error code, it actually returns success
     if [[ $exit_code -ne 0 ]]; then
         assert_success "Delete non-existent file failed as expected"
@@ -238,12 +245,11 @@ test_empty_empty() {
     teardown
 }
 
-
-
 test_empty_confirmation() {
     log_section "Test: Testing the confirmation"
     setup
     echo "a" > "$TEST_DIR/a.txt"
+    $SCRIPT > /dev/null 2>&1 > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/a.txt" > /dev/null 2>&1
     IDa=$($SCRIPT list | grep "a.txt" | awk '{print $1}')
     echo "n" | $SCRIPT empty "$IDa" > /dev/null 2>&1
@@ -265,16 +271,17 @@ test_empty_recycle_without_arguments() {
     echo "d" > "$TEST_DIR/d.txt"
     echo "e" > "$TEST_DIR/e.txt"
     echo "f" > "$TEST_DIR/f.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/a.txt" "$TEST_DIR/b.txt" "$TEST_DIR/c.txt" "$TEST_DIR/d.txt" "$TEST_DIR/e.txt" "$TEST_DIR/f.txt" > /dev/null 2>&1
     $SCRIPT empty --force > /dev/null 2>&1
     assert_success "Empty recycle without arguments"
     # Checks if the function works as properly
     #this function works properly
-    #if [ -z "$(ls -A "$FILES_DIR")" ]; then
-    #    echo "Recycle is empty"
-    #else
-    #    echo "Recycle is not empty"
-    #fi
+    if [ -z "$(ls -A "$FILES_DIR")" ]; then
+        echo "Recycle is empty"
+    else
+        echo "Recycle is not empty"
+    fi
     teardown
 }
 
@@ -287,16 +294,17 @@ test_empty_recycle_with_all() {
     echo "d" > "$TEST_DIR/d.txt"
     echo "e" > "$TEST_DIR/e.txt"
     echo "f" > "$TEST_DIR/f.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/a.txt" "$TEST_DIR/b.txt" "$TEST_DIR/c.txt" "$TEST_DIR/d.txt" "$TEST_DIR/e.txt" "$TEST_DIR/f.txt" > /dev/null 2>&1
     $SCRIPT empty --force all > /dev/null 2>&1
     assert_success "Empty recycle using all"
     # Checks if the function works as properly
     #this function works properly
-    #if [ -z "$(ls -A "$FILES_DIR")" ]; then
-    #    echo "Recycle is empty"
-    #else
-    #    echo "Recycle is not empty"
-    #fi
+    if [ -z "$(ls -A "$FILES_DIR")" ]; then
+        echo "Recycle is empty"
+    else
+        echo "Recycle is not empty"
+    fi
     teardown
 }
 
@@ -305,6 +313,7 @@ test_empty_multiple_files() {
     setup
     echo "a" > "$TEST_DIR/a.txt"
     echo "b" > "$TEST_DIR/b.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/a.txt" "$TEST_DIR/b.txt" > /dev/null 2>&1
     IDa=$($SCRIPT list | grep "a.txt" | awk '{print $1}')
     IDb=$($SCRIPT list | grep "b.txt" | awk '{print $1}')
@@ -312,11 +321,11 @@ test_empty_multiple_files() {
     assert_success "Delete permanently multiple files"
     # Checks if the function works as properly
     #this function works properly
-    #if [ ! -e "$FILES_DIR/a.txt" ] && [ ! -e "$FILES_DIR/b.txt" ]; then
-    #    echo "Files deleted successfully"
-    #else
-    #    echo "Files not deleted"
-    #fi
+    if [ ! -e "$FILES_DIR/a.txt" ] && [ ! -e "$FILES_DIR/b.txt" ]; then
+        echo "Files deleted successfully"
+    else
+        echo "Files not deleted"
+    fi
     teardown
 }
 
@@ -324,17 +333,18 @@ test_empty_empty_directory() {
     log_section "Test: Delete permanently a empty directory"
     setup
     mkdir "$TEST_DIR/empty_dir"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/empty_dir" > /dev/null 2>&1
-    IDdir=$($SCRIPT list | grep "empty_dir" | awk '{print $1}')
+    IDdir=$($SCRIPT list | grep "empty_dir" | awk '{print $1}') 
     $SCRIPT empty --force "$IDdir" > /dev/null 2>&1
     assert_success "Delete permanently an empty directory"
     # Checks if the function works as properly
     #this function works properly
-    #if [ ! -e "$FILES_DIR/empty_dir" ]; then
-    #    echo "Empty folder deleted successfully"
-    #else
-    #    echo "Empty folder not deleted"
-    #fi
+    if [ ! -e "$FILES_DIR/empty_dir" ]; then
+        echo "Empty folder deleted successfully"
+    else
+        echo "Empty folder not deleted"
+    fi
     teardown
 }
 
@@ -343,17 +353,18 @@ test_empty_directory_with_contents() {
     setup
     mkdir -p "$TEST_DIR/nested/dir"
     echo "inside" > "$TEST_DIR/nested/dir/file.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/nested" > /dev/null 2>&1
     IDdir=$($SCRIPT list | grep "nested" | awk '{print $1}')
     $SCRIPT empty --force "$IDdir" > /dev/null 2>&1
     assert_success "Delete permanently a directory with content"
     # Checks if the function works as properly
     #this function works properly
-    #if [ ! -e "$FILES_DIR/nested" ]; then
-    #    echo "Folder with content deleted successfully"
-    #else
-    #    echo "Folder not deleted"
-    #fi
+    if [ ! -e "$FILES_DIR/nested" ]; then
+        echo "Folder with content deleted successfully"
+    else
+        echo "Folder not deleted"
+    fi
     teardown
 }
 
@@ -363,6 +374,7 @@ test_empty_with_some_wrong_ids() {
     echo "a" > "$TEST_DIR/a.txt"
     echo "b" > "$TEST_DIR/b.txt"
     echo "c" > "$TEST_DIR/c.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/a.txt" "$TEST_DIR/b.txt" "$TEST_DIR/c.txt" > /dev/null 2>&1
     IDa=$($SCRIPT list | grep "a.txt" | awk '{print $1}')
     IDb=$($SCRIPT list | grep "b.txt" | awk '{print $1}')
@@ -377,15 +389,14 @@ test_empty_with_some_wrong_ids() {
     fi
     # Checks if the function works as properly
     #this function works properly
-    #if [ ! -e "$FILES_DIR/a.txt" ] && [ ! -e "$FILES_DIR/b.txt" ] && [ ! -e "$FILES_DIR/c.txt" ]; then
-    #    echo "Files deleted successfully"
-
-    #else
-    #    echo "Files not deleted"
-
-    #fi
+    if [ ! -e "$FILES_DIR/a.txt" ] && [ ! -e "$FILES_DIR/b.txt" ] && [ ! -e "$FILES_DIR/c.txt" ]; then
+        echo "Files deleted successfully"
+    else
+        echo "Files not deleted"
+    fi
     teardown
 }
+
 test_empty_all_wrong_ids() {
     log_section "Test: Deleting files where all ids are invalid"
     setup
@@ -424,6 +435,7 @@ test_status() {
     echo "d" > "$TEST_DIR/d.txt"
     echo "e" > "$TEST_DIR/e.txt"
     echo "f" > "$TEST_DIR/f.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/a.txt" "$TEST_DIR/b.txt" "$TEST_DIR/c.txt" "$TEST_DIR/d.txt" "$TEST_DIR/e.txt" "$TEST_DIR/f.txt" > /dev/null 2>&1
     $SCRIPT status > /dev/null 2>&1
     assert_success "Status recycle"
@@ -446,6 +458,7 @@ test_auto_clean_up() {
     # Create a old and a new file
     echo "old file" > "$TEST_DIR/old.txt"
     echo "new file" > "$TEST_DIR/new.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/old.txt" "$TEST_DIR/new.txt" > /dev/null 2>&1
 
     # Adapt the metadata file to simulate an old file(<30 dias)
@@ -460,11 +473,11 @@ test_auto_clean_up() {
     assert_success "Auto cleanup deleted old files"
 
     # Checks if the function works as properly
-    #if [ ! -e "$FILES_DIR/old.txt" ] && [ -e "$FILES_DIR/new.txt" ]; then
-    #    echo "Old file auto-deleted, new file preserved"
-    #else
-    #    echo "FAIL: Auto cleanup did not behave as expected"
-    #fi
+    if [ ! -e "$FILES_DIR/old.txt" ] && [ -e "$FILES_DIR/new.txt" ]; then
+        echo "Old file auto-deleted, new file preserved"
+    else
+        echo "FAIL: Auto cleanup did not behave as expected"
+    fi
 
     teardown
 }
@@ -474,14 +487,10 @@ test_auto_clean_up_nothing() {
     setup
     echo "new file1" > "$TEST_DIR/a.txt"
     echo "new file2" > "$TEST_DIR/b.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/a.txt" "$TEST_DIR/b.txt" > /dev/null 2>&1
     $SCRIPT clean test > /dev/null 2>&1
     assert_success "Auto clean up was already optimize"
-    #if [ -e "$FILES_DIR/a.txt" ] && [ -e "$FILES_DIR/b.txt" ]; then
-    #    echo "Files preserved as expected"
-    #else
-    #    echo "Unexpected deletion"
-    #fi
     teardown
 }
 
@@ -489,13 +498,14 @@ test_search_pattern() {
     log_section "Test: Search using a pattern"
     setup
     echo "a" > "$TEST_DIR/a.txt"
-    echo "ab" > "$TEST_DIR/b.txt"
-    echo "ac" > "$TEST_DIR/c.txt"
+    echo "ab" > "$TEST_DIR/ab.txt"
+    echo "ac" > "$TEST_DIR/ac.txt"
     echo "d" > "$TEST_DIR/d.txt"
     echo "e" > "$TEST_DIR/e.txt"
     echo "f" > "$TEST_DIR/f.txt"
-    $SCRIPT delete "$TEST_DIR/a.txt" "$TEST_DIR/b.txt" "$TEST_DIR/c.txt" "$TEST_DIR/d.txt" "$TEST_DIR/e.txt" "$TEST_DIR/f.txt" > /dev/null 2>&1
-    $SCRIPT search a* > /dev/null 2>&1
+    $SCRIPT > /dev/null 2>&1
+    $SCRIPT delete "$TEST_DIR/a.txt" "$TEST_DIR/ab.txt" "$TEST_DIR/ac.txt" "$TEST_DIR/d.txt" "$TEST_DIR/e.txt" "$TEST_DIR/f.txt" > /dev/null 2>&1
+    $SCRIPT search ^a.* > /dev/null 2>&1
     assert_success "Search using a pattern"
     teardown 
 }
@@ -507,6 +517,7 @@ test_search_folder() {
     mkdir "$TEST_DIR/dir2"
     mkdir "$TEST_DIR/dir3"
     mkdir "$TEST_DIR/dir4"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/dir1" "$TEST_DIR/dir2" "$TEST_DIR/dir3" "$TEST_DIR/dir4" > /dev/null 2>&1
     $SCRIPT search "dir3" > /dev/null 2>&1
     assert_success "Search for a directory"
@@ -516,6 +527,7 @@ test_search_folder() {
 test_search_nothing() {
     log_section "Test: Search for nothing"
     setup
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT search > /dev/null 2>&1
     local exit_code=$?
     if [[ $exit_code -ne 0 ]]; then
@@ -535,6 +547,7 @@ test_search_didnt_find() {
     echo "d" > "$TEST_DIR/d.txt"
     echo "e" > "$TEST_DIR/e.txt"
     echo "f" > "$TEST_DIR/f.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/a.txt" "$TEST_DIR/b.txt" "$TEST_DIR/c.txt" "$TEST_DIR/d.txt" "$TEST_DIR/e.txt" "$TEST_DIR/f.txt" > /dev/null 2>&1
     $SCRIPT search "g" > /dev/null 2>&1
     local exit_code=$?
@@ -545,11 +558,13 @@ test_search_didnt_find() {
     fi
     teardown
 }
+
 test_check() {
     log_section "Test: checking if recycle is full"
     setup
     echo "a" > "$TEST_DIR/a.txt"
     echo "b" > "$TEST_DIR/b.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/a.txt" "$TEST_DIR/b.txt" > /dev/null 2>&1
     echo "y" | $SCRIPT check test > /dev/null 2>&1
     assert_success "Checking if recycle is full"
@@ -563,6 +578,7 @@ test_check_with_full_recycle_not_optimzed() {
     truncate -s 512k "$TEST_DIR/bigNew.txt"
     echo "big old file" > "$TEST_DIR/bigOld.txt"
     truncate -s 768k "$TEST_DIR/bigOld.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/bigOld.txt" "$TEST_DIR/bigNew.txt" > /dev/null 2>&1
     
     # Adapt the metadata file to simulate an old file(<30 dias)
@@ -591,6 +607,7 @@ test_check_with_full_recycle_optimized() {
     truncate -s 512K "$TEST_DIR/bigNew.txt"
     echo "big b file" > "$TEST_DIR/bigOld.txt"
     truncate -s 768k "$TEST_DIR/bigOld.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/bigOld.txt" "$TEST_DIR/bigNew.txt" > /dev/null 2>&1
     echo "y" | $SCRIPT check test > /dev/null 2>&1
     local exit_code=$?
@@ -606,6 +623,7 @@ test_filename_with_spaces() {
     log_section "Test: Handle Filename with Spaces"
     setup
     echo "data" > "$TEST_DIR/file with spaces.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/file with spaces.txt" > /dev/null 2>&1
     assert_success "Delete file with spaces"
     teardown
@@ -615,6 +633,7 @@ test_filename_special_chars() {
     log_section "Test: Handle Filename with Special Characters"
     setup
     echo "special" > "$TEST_DIR/file!@#$.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/file!@#$.txt" > /dev/null 2>&1
     assert_success "Delete file with special characters"
     teardown
@@ -624,6 +643,7 @@ test_hidden_file() {
     log_section "Test: Handle Hidden File"
     setup
     echo "hidden" > "$TEST_DIR/.hidden.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/.hidden.txt" > /dev/null 2>&1
     assert_success "Delete hidden file"
     teardown
@@ -634,6 +654,7 @@ test_symlink_handling() {
     setup
     echo "target" > "$TEST_DIR/original.txt"
     ln -s "$TEST_DIR/original.txt" "$TEST_DIR/link.txt"
+    $SCRIPT > /dev/null 2>&1
     $SCRIPT delete "$TEST_DIR/link.txt" > /dev/null 2>&1
     assert_success "Delete symbolic link"
     teardown
@@ -644,6 +665,7 @@ test_large_metadata_search() {
     setup
     for i in $(seq 1 100); do
         echo "file $i" > "$TEST_DIR/file_$i.txt"
+        $SCRIPT > /dev/null 2>&1
         $SCRIPT delete "$TEST_DIR/file_$i.txt" > /dev/null 2>&1
     done
     $SCRIPT list | grep -q "file_99"
