@@ -61,7 +61,6 @@ delete_file() {
     fi
 
     for target in "$@"; do
-
         if [[ ! -e "$target" ]]; then
             echo "[ERROR] FILE or DIRECTORY not found: $target" >&2
             log "ERROR" "File/Directory not found: $target"
@@ -74,7 +73,7 @@ delete_file() {
             continue
         fi
 
-        # Generate unique ID
+        # Generate unique ID for file so it doesn't confuse with the namaFile(in case there's duplicate fileNames)
         local id
         id=$(uuidgen 2>/dev/null || date +%s%N)
         local base_name
@@ -83,7 +82,7 @@ delete_file() {
         abs_path=$(realpath "$target")
         local dest_path="$FILES_DIR/$id"
 
-        # Determine size and type
+        # Determine size of the file and type of the file
         local file_size file_type perms owner
         if [[ -d "$target" ]]; then
             file_type="directory"
@@ -93,6 +92,7 @@ delete_file() {
             file_size=$(stat -c %s "$target")
         fi
 
+        # Determine the permissions of the file
         perms=$(stat -c %a "$target")
         owner=$(stat -c %U:%G "$target")
         local deletion_date
